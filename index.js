@@ -1,11 +1,27 @@
 const express = require('express');
+const client = require('prom-client');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const register = new client.Registry();
 
-app.get('/', (req, res) => res.send('¡Hola Mundo desde Docker!-'));
-app.get('/health', (req, res) => res.send({ status: 'ok' }));
+client.collectDefaultMetrics({ register });
 
-app.listen(PORT, () => console.log(`App corriendo en puerto ${PORT}`));
+// Ruta de métricas
+app.get('/metrics', async (req, res) => {
+  res.setHeader('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
-module.exports = app;
+app.get('/', (req, res) => {
+  res.send('API básica funcionando');
+});
+
+app.listen(3000, () => {
+  console.log('Servidor en puerto 3000');
+});
+
+app.get('/fail', (req, res) => {
+  res.status(500).send('Error simulado');
+});
+
 
